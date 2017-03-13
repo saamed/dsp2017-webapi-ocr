@@ -1,5 +1,4 @@
 import Interface.BasicImageOperations;
-import DataStructures.ImageData;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -20,40 +19,27 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
     }
 
     @Override
-    public ImageData convertToGrayscale(ImageData imageData) {
+    public BufferedImage convertToGrayscale(BufferedImage imageData) {
 
-        Mat src = convertImageToMat(imageData.getWidth(), imageData.getHeight(), imageData.getData());
+        Mat src = convertImageToMat(imageData);
         Mat dst = convertToGrayscale(src);
 
-        byte[] resultData = convertMatToImage(dst);
-
-        ImageData result = new ImageData();
-        result.setHeight(imageData.getHeight());
-        result.setWidth(imageData.getWidth());
-        result.setData(resultData);
-
-        return result;
+        return convertMatToImage(dst);
     }
 
     @Override
-    public ImageData binarizeColorImage(ImageData imageData) {
+    public BufferedImage binarizeColorImage(BufferedImage imageData) {
 
-        Mat src = convertImageToMat(imageData.getWidth(), imageData.getHeight(), imageData.getData());
+        Mat src = convertImageToMat(imageData);
         Mat dst = binarizeColorImage(src);
 
-        byte[] resultData = convertMatToImage(dst);
-        ImageData result = new ImageData();
-        result.setHeight(imageData.getHeight());
-        result.setWidth(imageData.getWidth());
-        result.setData(resultData);
-
-        return result;
+        return convertMatToImage(dst);
     }
 
     @Override
-    public ImageData getBinarizedImageHistogram(ImageData imageData) {
+    public BufferedImage binarizeImageAndGetHistogram(BufferedImage image) {
 
-        Mat binarized = binarizeColorImage(convertImageToMat(imageData.getWidth(),imageData.getHeight(), imageData.getData()));
+        Mat binarized = binarizeColorImage(convertImageToMat(image));
         List<Integer> histogramData = new ArrayList<>();
 
         int rowCount = binarized.rows();
@@ -70,22 +56,18 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
             histogramData.add(count);
         }
 
-        BufferedImage histogramImg = new BufferedImage(imageData.getWidth(), imageData.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+        BufferedImage histogramImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = histogramImg.createGraphics();
 
         graphics.setPaint(Color.WHITE);
-        graphics.fillRect(0,0,imageData.getWidth(),imageData.getHeight());
+        graphics.fillRect(0,0,image.getWidth(),image.getHeight());
 
         graphics.setPaint(Color.BLACK);
         for (int i = 0; i <histogramData.size(); i++){
             graphics.fillRect(0,i,histogramData.get(i),1);
         }
 
-        byte[] data = ((DataBufferByte) histogramImg.getRaster().getDataBuffer()).getData();
-
-        ImageData result = new ImageData(imageData.getWidth(),imageData.getHeight(), data);
-
-        return result;
+        return histogramImg;
     }
 
     private Mat binarizeColorImage(Mat src) {
@@ -106,20 +88,36 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         return dst;
     }
 
-    private Mat convertImageToMat(int width, int height, byte[] imageData){
+    private Mat convertImageToMat(BufferedImage image){
 
-        Mat mat = new Mat(height, width, CvType.CV_8UC3);
+        Mat mat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC3);
 
-        mat.put(0,0, imageData);
+        byte[] data = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
+
+        mat.put(0,0, data);
 
         return mat;
     }
 
-    private byte[] convertMatToImage(Mat mat){
+    private BufferedImage convertMatToImage(Mat mat){
         byte[] data = new byte[mat.rows() * mat.cols() * (int) mat.elemSize()];
+        int type = mat.type();
+
+        int imageType;
+
+        if (type == CvType.CV_8S)
+            imageType = BufferedImage.TYPE_BYTE_BINARY;
+        else if (type == CvType.CV_8UC1)
+            imageType = BufferedImage.TYPE_BYTE_GRAY;
+        else
+            imageType = BufferedImage.TYPE_3BYTE_BGR;
 
         mat.get(0,0, data);
 
-        return data;
+        BufferedImage image = new BufferedImage(mat.width(), mat.height(), imageType);
+
+        image.getRaster().setDataElements(0,0, image.getWidth(), image.getHeight(),data);
+
+        return image;
     }
 }

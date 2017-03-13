@@ -252,3 +252,5 @@ paket-files/
 *.sln.iml
 Libs/*.dll
 /java/out
+/java/DSP.ImageProcessing.WebService/lib
+/java/DSP.ImageProcessing.Core/lib
