@@ -1,3 +1,4 @@
+import DataStructures.TextLineData;
 import Interface.BasicImageOperations;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -19,18 +20,18 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
     }
 
     @Override
-    public BufferedImage convertToGrayscale(BufferedImage imageData) {
+    public BufferedImage convertToGrayscale(BufferedImage image) {
 
-        Mat src = convertImageToMat(imageData);
+        Mat src = convertImageToMat(image);
         Mat dst = convertToGrayscale(src);
 
         return convertMatToImage(dst);
     }
 
     @Override
-    public BufferedImage binarizeColorImage(BufferedImage imageData) {
+    public BufferedImage binarizeColorImage(BufferedImage image) {
 
-        Mat src = convertImageToMat(imageData);
+        Mat src = convertImageToMat(image);
         Mat dst = binarizeColorImage(src);
 
         return convertMatToImage(dst);
@@ -40,21 +41,7 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
     public BufferedImage binarizeImageAndGetHistogram(BufferedImage image) {
 
         Mat binarized = binarizeColorImage(convertImageToMat(image));
-        List<Integer> histogramData = new ArrayList<>();
-
-        int rowCount = binarized.rows();
-        int colCount = binarized.cols();
-
-        for (int i = 0; i < rowCount; i++){
-            int count = 0;
-            for (int j = 0; j < colCount; j++){
-                double[] cell = binarized.get(i,j);
-                if (cell[0]==0)
-                    count++;
-            }
-
-            histogramData.add(count);
-        }
+        List<Integer> histogramData = getHistogramForBinarized(binarized);
 
         BufferedImage histogramImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = histogramImg.createGraphics();
@@ -68,6 +55,36 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         }
 
         return histogramImg;
+    }
+
+    @Override
+    public List<TextLineData> detectTextLines(BufferedImage image, int margin) {
+        Mat binarized = binarizeColorImage(convertImageToMat(image));
+        List<Integer> histogramData = getHistogramForBinarized(binarized);
+
+        List<TextLineData> result = new ArrayList<>();
+
+        int start = -1;
+        int height = 1;
+        for (int i =0; i < histogramData.size(); i++){
+            if (histogramData.get(i) > margin){
+                if (start == -1)
+                    start = i;
+                else
+                    height++;
+            }
+            else{
+                if (start>-1 && height >1){
+                    TextLineData entry = new TextLineData(start,height);
+                    result.add(entry);
+
+                    start = -1;
+                    height = 1;
+                }
+            }
+        }
+
+        return result;
     }
 
     private Mat binarizeColorImage(Mat src) {
@@ -119,5 +136,25 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         image.getRaster().setDataElements(0,0, image.getWidth(), image.getHeight(),data);
 
         return image;
+    }
+
+    private List<Integer> getHistogramForBinarized(Mat mat){
+        List<Integer> histogramData = new ArrayList<>();
+
+        int rowCount = mat.rows();
+        int colCount = mat.cols();
+
+        for (int i = 0; i < rowCount; i++){
+            int count = 0;
+            for (int j = 0; j < colCount; j++){
+                double[] cell = mat.get(i,j);
+                if (cell[0]==0)
+                    count++;
+            }
+
+            histogramData.add(count);
+        }
+
+        return histogramData;
     }
 }
