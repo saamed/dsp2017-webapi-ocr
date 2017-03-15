@@ -1,5 +1,6 @@
 package Interface;
 
+import DataStructures.LetterData;
 import DataStructures.TextLineData;
 
 import java.awt.image.BufferedImage;
@@ -12,5 +13,6 @@ public interface BasicImageOperations {
     BufferedImage convertToGrayscale(BufferedImage image);
     BufferedImage binarizeColorImage(BufferedImage image);
     BufferedImage binarizeImageAndGetHistogram(BufferedImage image);
-    List<TextLineData> detectTextLines(BufferedImage image, int margin);
+    List<TextLineData> detectTextLines(BufferedImage image, int minimalValue);
+    List<LetterData[]> detectLetterLocations(BufferedImage image, int xMinimalValue, int yMinimalValue);
 }
