@@ -12,7 +12,8 @@ import java.util.List;
 public interface BasicImageOperations {
     BufferedImage convertToGrayscale(BufferedImage image);
     BufferedImage binarizeColorImage(BufferedImage image);
-    BufferedImage binarizeImageAndGetHistogram(BufferedImage image);
+    BufferedImage binarizeImageAndGetXAxisHistogram(BufferedImage image);
+    BufferedImage detectTextLinesAndGetLinesHistogram(BufferedImage image, int xMinimalValue);
     List<TextLineData> detectTextLines(BufferedImage image, int minimalValue);
     List<LetterData[]> detectLetterLocations(BufferedImage image, int xMinimalValue, int yMinimalValue);
 }

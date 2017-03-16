@@ -40,7 +40,7 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
     }
 
     @Override
-    public BufferedImage binarizeImageAndGetHistogram(BufferedImage image) {
+    public BufferedImage binarizeImageAndGetXAxisHistogram(BufferedImage image) {
 
         Mat binarized = binarizeColorImage(convertImageToMat(image));
         List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
@@ -54,6 +54,34 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         graphics.setPaint(Color.BLACK);
         for (int i = 0; i <histogramData.size(); i++){
             graphics.fillRect(0,i,histogramData.get(i),1);
+        }
+
+        return histogramImg;
+    }
+
+    @Override
+    public BufferedImage detectTextLinesAndGetLinesHistogram(BufferedImage image, int xMinimalValue) {
+        List<TextLineData> lines = detectTextLines(image,xMinimalValue);
+        Mat matImage = binarizeColorImage(convertImageToMat(image));
+        BufferedImage histogramImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D graphics = histogramImg.createGraphics();
+
+        graphics.setPaint(Color.WHITE);
+        graphics.fillRect(0,0,image.getWidth(),image.getHeight());
+
+        graphics.setPaint(Color.BLACK);
+
+        for (int i = 0; i <lines.size(); i++){
+            TextLineData row = lines.get(i);
+            Mat line = matImage.submat(row.getY(), row.getY() + row.getHeight(), 0, matImage.cols());
+
+            List<Integer> yAxisHistogram = getYAxisHistogramData(line);
+
+            for (int j =0; j < yAxisHistogram.size(); j++){
+                int height = yAxisHistogram.get(j);
+
+                graphics.fillRect(j,row.getY(),1,height);
+            }
         }
 
         return histogramImg;
@@ -178,6 +206,11 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
                     height = 1;
                 }
             }
+        }
+
+        if (start>-1 && height >1){
+            TextLineData entry = new TextLineData(start,height);
+            result.add(entry);
         }
 
         return result;

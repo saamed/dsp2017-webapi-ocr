@@ -1,3 +1,4 @@
+import DataStructures.TextLineData;
 import Interface.BasicImageOperations;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -12,6 +13,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by bclapa on 12.03.2017.
@@ -28,11 +30,14 @@ public class MainWindowController {
     @FXML
     private ImageView binarizedImageView;
     @FXML
-    private ImageView histogramImageView;
+    private ImageView histogramXAxisImageView;
+    @FXML
+    private ImageView histogramYAxisImageView;
 
     BufferedImage sourceImage;
     BufferedImage binarizedImage;
-    BufferedImage histogramImage;
+    BufferedImage xAxisHistogramImage;
+    BufferedImage yAxisHistogramImage;
 
     BasicImageOperations imageOperations;
 
@@ -69,9 +74,16 @@ public class MainWindowController {
         Image img = SwingFXUtils.toFXImage(binarizedImage, null);
         binarizedImageView.setImage(img);
 
-        histogramImage = imageOperations.binarizeImageAndGetHistogram(sourceImage);
+        xAxisHistogramImage = imageOperations.binarizeImageAndGetXAxisHistogram(sourceImage);
 
-        Image imgHist = SwingFXUtils.toFXImage(histogramImage, null);
-        histogramImageView.setImage(imgHist);
+        Image imgHistX = SwingFXUtils.toFXImage(xAxisHistogramImage, null);
+        histogramXAxisImageView.setImage(imgHistX);
+
+        List<TextLineData> data = imageOperations.detectTextLines(sourceImage, 0);
+
+        yAxisHistogramImage = imageOperations.detectTextLinesAndGetLinesHistogram(sourceImage, 0);
+
+        Image imgHistY = SwingFXUtils.toFXImage(yAxisHistogramImage, null);
+        histogramYAxisImageView.setImage(imgHistY);
     }
 }
