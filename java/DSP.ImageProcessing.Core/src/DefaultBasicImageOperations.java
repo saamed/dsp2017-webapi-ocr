@@ -15,127 +15,31 @@ import java.util.List;
 /**
  * Created by bclapa on 10.03.2017.
  */
-@SuppressWarnings("Duplicates")
 public class DefaultBasicImageOperations implements BasicImageOperations {
     public DefaultBasicImageOperations() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    @Override
-    public BufferedImage convertToGrayscale(BufferedImage image) {
-
-        Mat src = convertImageToMat(image);
-        Mat dst = convertToGrayscale(src);
-
-        return convertMatToImage(dst);
-    }
 
     @Override
-    public BufferedImage binarizeColorImage(BufferedImage image) {
+    public Mat convertImageToMat(BufferedImage image){
 
-        Mat src = convertImageToMat(image);
-        Mat dst = binarizeColorImage(src);
+        int imageType;
 
-        return convertMatToImage(dst);
-    }
-
-    @Override
-    public BufferedImage binarizeImageAndGetXAxisHistogram(BufferedImage image) {
-
-        Mat binarized = binarizeColorImage(convertImageToMat(image));
-        List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
-
-        BufferedImage histogramImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-        Graphics2D graphics = histogramImg.createGraphics();
-
-        graphics.setPaint(Color.WHITE);
-        graphics.fillRect(0,0,image.getWidth(),image.getHeight());
-
-        graphics.setPaint(Color.BLACK);
-        for (int i = 0; i <histogramData.size(); i++){
-            graphics.fillRect(0,i,histogramData.get(i),1);
+        switch (image.getType()){
+            case BufferedImage.TYPE_BYTE_BINARY:
+                imageType = CvType.CV_8S;
+                break;
+            case BufferedImage.TYPE_BYTE_GRAY:
+                imageType = CvType.CV_8UC1;
+                break;
+            case BufferedImage.TYPE_3BYTE_BGR:
+            default:
+                imageType = CvType.CV_8UC3;
+                break;
         }
 
-        return histogramImg;
-    }
-
-    @Override
-    public BufferedImage detectTextLinesAndGetLinesHistogram(BufferedImage image, int xMinimalValue) {
-        List<TextLineData> lines = detectTextLines(image,xMinimalValue);
-        Mat matImage = binarizeColorImage(convertImageToMat(image));
-        BufferedImage histogramImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-        Graphics2D graphics = histogramImg.createGraphics();
-
-        graphics.setPaint(Color.WHITE);
-        graphics.fillRect(0,0,image.getWidth(),image.getHeight());
-
-        graphics.setPaint(Color.BLACK);
-
-        for (int i = 0; i <lines.size(); i++){
-            TextLineData row = lines.get(i);
-            Mat line = matImage.submat(row.getY(), row.getY() + row.getHeight(), 0, matImage.cols());
-
-            List<Integer> yAxisHistogram = getYAxisHistogramData(line);
-
-            for (int j =0; j < yAxisHistogram.size(); j++){
-                int height = yAxisHistogram.get(j);
-
-                graphics.fillRect(j,row.getY(),1,height);
-            }
-        }
-
-        return histogramImg;
-    }
-
-    @Override
-    public List<TextLineData> detectTextLines(BufferedImage image, int minimalValue) {
-        Mat binarized = binarizeColorImage(convertImageToMat(image));
-        List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
-
-        List<TextLineData> result = detectTextLines(histogramData,minimalValue);
-
-        return result;
-    }
-
-    @Override
-    public List<LetterData[]> detectLetterLocations(BufferedImage image, int xMinimalValue, int yMinimalValue){
-        List<LetterData[]> result = new ArrayList<>();
-
-        Mat binarized = binarizeColorImage(convertImageToMat(image));
-        List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
-
-        List<TextLineData> textLines = detectTextLines(histogramData,yMinimalValue);
-
-        for (int i = 0; i < textLines.size(); i++){
-            List<LetterData> line = detectLettersInLine(textLines.get(i), binarized, xMinimalValue);
-
-            result.add(line.toArray(new LetterData[0]));
-        }
-
-        return result;
-    }
-
-    private Mat binarizeColorImage(Mat src) {
-
-        Mat gray = convertToGrayscale(src);
-        Mat dst = new Mat(src.rows(), src.cols(), CvType.CV_8S);
-
-        Imgproc.threshold(gray, dst,0,255,Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
-
-        return dst;
-    }
-
-    private Mat convertToGrayscale(Mat src){
-        Mat dst = new Mat(src.rows(), src.cols(), CvType.CV_8UC1);
-
-        Imgproc.cvtColor(src, dst, Imgproc.COLOR_RGB2GRAY);
-
-        return dst;
-    }
-
-    private Mat convertImageToMat(BufferedImage image){
-
-        Mat mat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC3);
+        Mat mat = new Mat(image.getHeight(), image.getWidth(), imageType);
 
         byte[] data = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
 
@@ -144,7 +48,8 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         return mat;
     }
 
-    private BufferedImage convertMatToImage(Mat mat){
+    @Override
+    public BufferedImage convertMatToImage(Mat mat){
         byte[] data = new byte[mat.rows() * mat.cols() * (int) mat.elemSize()];
         int type = mat.type();
 
@@ -166,102 +71,24 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         return image;
     }
 
-    private List<Integer> getXAxisHistogramForBinarized(Mat mat){
-        List<Integer> histogramData = new ArrayList<>();
+    @Override
+    public Mat binarizeColorImage(Mat colorImage) {
 
-        int rowCount = mat.rows();
-        int colCount = mat.cols();
+        Mat gray = convertToGrayscale(colorImage);
+        Mat dst = new Mat(colorImage.rows(), colorImage.cols(), CvType.CV_8S);
 
-        for (int i = 0; i < rowCount; i++){
-            int count = 0;
-            for (int j = 0; j < colCount; j++){
-                double[] cell = mat.get(i,j);
-                if (cell[0]==0)
-                    count++;
-            }
+        Imgproc.threshold(gray, dst,0,255,Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
 
-            histogramData.add(count);
-        }
-
-        return histogramData;
+        return dst;
     }
 
-    private List<TextLineData> detectTextLines(List<Integer> histogramData, int minimalValue){
-        List<TextLineData> result = new ArrayList<>();
+    @Override
+    public Mat convertToGrayscale(Mat colorImage){
+        Mat dst = new Mat(colorImage.rows(), colorImage.cols(), CvType.CV_8UC1);
 
-        int start = -1;
-        int height = 1;
-        for (int i =0; i < histogramData.size(); i++){
-            if (histogramData.get(i) > minimalValue){
-                if (start == -1)
-                    start = i;
-                else
-                    height++;
-            }else{
-                if (start>-1 && height >1){
-                    TextLineData entry = new TextLineData(start,height);
-                    result.add(entry);
+        Imgproc.cvtColor(colorImage, dst, Imgproc.COLOR_RGB2GRAY);
 
-                    start = -1;
-                    height = 1;
-                }
-            }
-        }
-
-        if (start>-1 && height >1){
-            TextLineData entry = new TextLineData(start,height);
-            result.add(entry);
-        }
-
-        return result;
+        return dst;
     }
 
-    private List<LetterData> detectLettersInLine(TextLineData textLineData, Mat image, int minimalValue) {
-        List<LetterData> result = new ArrayList<>();
-
-        Mat line = image.submat(textLineData.getY(), textLineData.getY() + textLineData.getHeight(), 0, image.cols());
-
-        List<Integer> yAxisHistogram = getYAxisHistogramData(line);
-
-        int start = -1;
-        int width = 1;
-        for (int i = 0; i < yAxisHistogram.size(); i++){
-            if (yAxisHistogram.get(i) > minimalValue){
-                if (start == -1)
-                    start = 1;
-                else
-                    width++;
-            }else{
-                if (start> -1 && width >1){
-                    LetterData entry = new LetterData(start,textLineData.getY(),width, textLineData.getHeight());
-                    result.add(entry);
-
-                    start = -1;
-                    width = 1;
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private List<Integer> getYAxisHistogramData(Mat mat){
-        List<Integer> histogramData = new ArrayList<>();
-
-        int rowCount = mat.rows();
-        int colCount = mat.cols();
-
-        for (int i = 0; i< colCount;i++){
-            int count = 0;
-            for (int j = 0; j< rowCount;j++){
-                double[] cell = mat.get(j,i);
-                if (cell[0]==0)
-                    count++;
-            }
-
-            histogramData.add(count);
-        }
-
-        return histogramData;
-    }
 }

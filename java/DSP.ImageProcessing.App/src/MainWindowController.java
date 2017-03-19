@@ -1,5 +1,6 @@
 import DataStructures.TextLineData;
 import Interface.BasicImageOperations;
+import Interface.ImageContentOperations;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -8,6 +9,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
+import org.opencv.core.Mat;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -40,11 +42,13 @@ public class MainWindowController {
     BufferedImage yAxisHistogramImage;
 
     BasicImageOperations imageOperations;
+    ImageContentOperations imageContentOperations;
 
     String imagePath;
 
     public MainWindowController() {
         imageOperations = new DefaultBasicImageOperations();
+        imageContentOperations = new DefaultImageContentOperations(imageOperations);
     }
 
     @FXML
@@ -69,19 +73,18 @@ public class MainWindowController {
     @FXML
     protected void processButtonClicked(MouseEvent e) throws IOException {
 
-        binarizedImage = imageOperations.binarizeColorImage(sourceImage);
+        Mat image = imageOperations.convertImageToMat(sourceImage);
+        binarizedImage = imageOperations.convertMatToImage(imageOperations.binarizeColorImage(image));
 
         Image img = SwingFXUtils.toFXImage(binarizedImage, null);
         binarizedImageView.setImage(img);
 
-        xAxisHistogramImage = imageOperations.binarizeImageAndGetXAxisHistogram(sourceImage);
+        xAxisHistogramImage = imageOperations.convertMatToImage(imageContentOperations.binarizeImageAndGetXAxisHistogram(image));
 
         Image imgHistX = SwingFXUtils.toFXImage(xAxisHistogramImage, null);
         histogramXAxisImageView.setImage(imgHistX);
 
-        List<TextLineData> data = imageOperations.detectTextLines(sourceImage, 0);
-
-        yAxisHistogramImage = imageOperations.detectTextLinesAndGetLinesHistogram(sourceImage, 0);
+        yAxisHistogramImage = imageOperations.convertMatToImage(imageContentOperations.detectTextLinesAndGetLinesHistogram(image, 0));
 
         Image imgHistY = SwingFXUtils.toFXImage(yAxisHistogramImage, null);
         histogramYAxisImageView.setImage(imgHistY);

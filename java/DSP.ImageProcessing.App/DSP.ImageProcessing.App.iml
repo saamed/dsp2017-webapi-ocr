@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="DSP.ImageProcessing.Core" />
+    <orderEntry type="library" name="opencv-320" level="project" />
   </component>
 </module>

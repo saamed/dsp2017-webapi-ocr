@@ -1,19 +1,16 @@
 package Interface;
 
-import DataStructures.LetterData;
-import DataStructures.TextLineData;
+import org.opencv.core.Mat;
 
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 /**
  * Created by bclapa on 10.03.2017.
  */
+
 public interface BasicImageOperations {
-    BufferedImage convertToGrayscale(BufferedImage image);
-    BufferedImage binarizeColorImage(BufferedImage image);
-    BufferedImage binarizeImageAndGetXAxisHistogram(BufferedImage image);
-    BufferedImage detectTextLinesAndGetLinesHistogram(BufferedImage image, int xMinimalValue);
-    List<TextLineData> detectTextLines(BufferedImage image, int minimalValue);
-    List<LetterData[]> detectLetterLocations(BufferedImage image, int xMinimalValue, int yMinimalValue);
+    Mat convertImageToMat(BufferedImage image);
+    BufferedImage convertMatToImage(Mat mat);
+    Mat binarizeColorImage(Mat colorImage);
+    Mat convertToGrayscale(Mat colorImage);
 }
