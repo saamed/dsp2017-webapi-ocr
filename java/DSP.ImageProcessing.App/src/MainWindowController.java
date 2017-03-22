@@ -12,6 +12,7 @@ import javafx.stage.FileChooser;
 import org.opencv.core.Mat;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -75,7 +76,7 @@ public class MainWindowController {
 
         Mat image = imageOperations.convertImageToMat(sourceImage);
         binarizedImage = imageOperations.convertMatToImage(imageOperations.binarizeColorImage(image));
-
+        
         Image img = SwingFXUtils.toFXImage(binarizedImage, null);
         binarizedImageView.setImage(img);
 
