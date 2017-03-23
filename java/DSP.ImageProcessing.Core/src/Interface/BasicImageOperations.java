@@ -13,4 +13,6 @@ public interface BasicImageOperations {
     BufferedImage convertMatToImage(Mat mat);
     Mat binarizeColorImage(Mat colorImage);
     Mat convertToGrayscale(Mat colorImage);
+    byte[] getBinaryImageVector(Mat mat);
+    double[] getNormalizedBinaryImageVector(Mat mat);
 }

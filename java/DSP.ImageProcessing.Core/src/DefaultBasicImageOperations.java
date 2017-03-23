@@ -1,16 +1,11 @@
-import DataStructures.LetterData;
-import DataStructures.TextLineData;
 import Interface.BasicImageOperations;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by bclapa on 10.03.2017.
@@ -86,9 +81,48 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
     public Mat convertToGrayscale(Mat colorImage){
         Mat dst = new Mat(colorImage.rows(), colorImage.cols(), CvType.CV_8UC1);
 
+        if (colorImage.type() == CvType.CV_8UC1)
+            return colorImage;
+
         Imgproc.cvtColor(colorImage, dst, Imgproc.COLOR_RGB2GRAY);
 
         return dst;
+    }
+
+    @Override
+    public byte[] getBinaryImageVector(Mat mat) {
+
+        long elemSize = mat.elemSize();
+        byte[] data = new byte[mat.rows() * mat.cols() * (int) elemSize];
+
+        mat.get(0,0,data);
+
+        for(int i =0; i < data.length; i++){
+            data[i] = (byte)(data[i]+1);
+        }
+
+        return data;
+    }
+
+    public double[] getNormalizedBinaryImageVector(Mat mat){
+        byte[] data = getBinaryImageVector(mat);
+
+        double sum = 0;
+
+        for (int i = 0; i < data.length; i++){
+            if (data[i]>0)
+                sum++;
+        }
+
+        double length = Math.sqrt(sum);
+
+        double[] normalizedVector = new double[data.length];
+
+        for (int i = 0; i <data.length; i++){
+            normalizedVector[i] = data[i]/length;
+        }
+
+        return normalizedVector;
     }
 
 }

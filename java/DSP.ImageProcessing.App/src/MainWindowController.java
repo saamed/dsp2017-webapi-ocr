@@ -87,6 +87,10 @@ public class MainWindowController {
 
         yAxisHistogramImage = imageOperations.convertMatToImage(imageContentOperations.detectTextLinesAndGetLinesHistogram(image, 0));
 
+        Mat bin = imageOperations.binarizeColorImage(image);
+        byte[] vector = imageOperations.getBinaryImageVector(bin);
+        double[] normalizedVector = imageOperations.getNormalizedBinaryImageVector(bin);
+
         Image imgHistY = SwingFXUtils.toFXImage(yAxisHistogramImage, null);
         histogramYAxisImageView.setImage(imgHistY);
     }
