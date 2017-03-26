@@ -30,7 +30,7 @@ public class DefaultCharacterRecognitionMechanisms implements CharacterRecogniti
     @Override
     public String recogniseUsingCorrelation(Mat letter) {
         String character = null;
-        double max = 0;
+        double max = -1;
 
         for (CharacterPattern pattern : patternProvider.getCharacterPatterns()) {
             Mat destination = new Mat();
