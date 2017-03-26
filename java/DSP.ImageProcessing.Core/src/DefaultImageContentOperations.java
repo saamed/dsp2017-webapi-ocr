@@ -166,7 +166,7 @@ public class DefaultImageContentOperations implements ImageContentOperations {
         for (int i = 0; i < yAxisHistogram.size(); i++){
             if (yAxisHistogram.get(i) > minimalValue){
                 if (start == -1)
-                    start = 1;
+                    start = i;
                 else
                     width++;
             }else{

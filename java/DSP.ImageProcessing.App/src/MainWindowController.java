@@ -1,6 +1,9 @@
+import DataStructures.LetterData;
 import DataStructures.TextLineData;
 import Interface.BasicImageOperations;
+import Interface.CharacterRecognitionMechanisms;
 import Interface.ImageContentOperations;
+import Patterns.DefaultPatternProvider;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -44,12 +47,14 @@ public class MainWindowController {
 
     BasicImageOperations imageOperations;
     ImageContentOperations imageContentOperations;
+    CharacterRecognitionMechanisms characterRecognitionMechanisms;
 
     String imagePath;
 
     public MainWindowController() {
         imageOperations = new DefaultBasicImageOperations();
         imageContentOperations = new DefaultImageContentOperations(imageOperations);
+        characterRecognitionMechanisms = new DefaultCharacterRecognitionMechanisms(imageOperations, new DefaultPatternProvider(imageOperations));
     }
 
     @FXML
@@ -75,7 +80,8 @@ public class MainWindowController {
     protected void processButtonClicked(MouseEvent e) throws IOException {
 
         Mat image = imageOperations.convertImageToMat(sourceImage);
-        binarizedImage = imageOperations.convertMatToImage(imageOperations.binarizeColorImage(image));
+        Mat binarized = imageOperations.binarizeColorImage(image);
+        binarizedImage = imageOperations.convertMatToImage(binarized);
         
         Image img = SwingFXUtils.toFXImage(binarizedImage, null);
         binarizedImageView.setImage(img);
@@ -87,9 +93,9 @@ public class MainWindowController {
 
         yAxisHistogramImage = imageOperations.convertMatToImage(imageContentOperations.detectTextLinesAndGetLinesHistogram(image, 0));
 
-        Mat bin = imageOperations.binarizeColorImage(image);
-        byte[] vector = imageOperations.getBinaryImageVector(bin);
-        double[] normalizedVector = imageOperations.getNormalizedBinaryImageVector(bin);
+        List<LetterData[]> letterData =  imageContentOperations.detectLetterLocations(image, 0,0);
+        int lineNumber = 3;
+        String recognizedTextLine = characterRecognitionMechanisms.recogniseTextLineCharactersUsingCorrelation(letterData.get(lineNumber), binarized);
 
         Image imgHistY = SwingFXUtils.toFXImage(yAxisHistogramImage, null);
         histogramYAxisImageView.setImage(imgHistY);
