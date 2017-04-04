@@ -2,16 +2,12 @@ import DataStructures.CharacterPattern;
 import DataStructures.LetterData;
 import Interface.BasicImageOperations;
 import Interface.CharacterRecognitionMechanisms;
+import Interface.ImageContentOperations;
 import Patterns.PatternProvider;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 
 /**
  * Created by bclapa on 26.03.2017.
@@ -19,11 +15,14 @@ import java.awt.image.BufferedImage;
 public class DefaultCharacterRecognitionMechanisms implements CharacterRecognitionMechanisms {
 
     private BasicImageOperations basicImageOperations;
+    private ImageContentOperations imageContentOperations;
     private PatternProvider patternProvider;
 
     public DefaultCharacterRecognitionMechanisms(BasicImageOperations basicImageOperations,
+                                                 ImageContentOperations imageContentOperations,
                                                  PatternProvider patternProvider) {
         this.basicImageOperations = basicImageOperations;
+        this.imageContentOperations = imageContentOperations;
         this.patternProvider = patternProvider;
     }
 
@@ -32,9 +31,12 @@ public class DefaultCharacterRecognitionMechanisms implements CharacterRecogniti
         String character = null;
         double max = -1;
 
+        Mat trimmed = this.imageContentOperations.trimToContours(letter);
+
         for (CharacterPattern pattern : patternProvider.getCharacterPatterns()) {
             Mat destination = new Mat();
-            Imgproc.resize(letter, destination, new Size(pattern.getWidth(), pattern.getHeight()));
+
+            Imgproc.resize(trimmed, destination, new Size(pattern.getWidth(), pattern.getHeight()));
             destination = basicImageOperations.binarizeColorImage(destination);
 
             double[] letterImageVector = basicImageOperations.getNormalizedBinaryImageVector(destination);

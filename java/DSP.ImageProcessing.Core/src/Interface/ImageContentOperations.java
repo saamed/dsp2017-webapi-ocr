@@ -3,6 +3,7 @@ package Interface;
 import DataStructures.LetterData;
 import DataStructures.TextLineData;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 
 import java.util.List;
 
@@ -15,4 +16,7 @@ public interface ImageContentOperations {
     Mat detectTextLinesAndGetLinesHistogram(Mat colorImage, int xMinimalValue);
     List<TextLineData> detectTextLines(Mat colorImage, int minimalValue);
     List<LetterData[]> detectLetterLocations(Mat colorImage, int xMinimalValue, int yMinimalValue);
+
+    Rect findRactangularContours(Mat img);
+    Mat trimToContours(Mat img);
 }

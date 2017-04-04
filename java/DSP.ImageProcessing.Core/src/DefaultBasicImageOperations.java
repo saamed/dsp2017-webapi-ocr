@@ -2,10 +2,15 @@ import Interface.BasicImageOperations;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by bclapa on 10.03.2017.
@@ -45,6 +50,9 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
 
     @Override
     public BufferedImage convertMatToImage(Mat mat){
+        if (mat.width() == 0 || mat.height() ==0)
+            return new BufferedImage(1,1,BufferedImage.TYPE_BYTE_BINARY);
+
         byte[] data = new byte[mat.rows() * mat.cols() * (int) mat.elemSize()];
         int type = mat.type();
 
@@ -125,4 +133,33 @@ public class DefaultBasicImageOperations implements BasicImageOperations {
         return normalizedVector;
     }
 
+    @Override
+    public void exportSubImage(Mat image, int x, int y, int width, int height, String fileName) {
+        Mat subImage = image.submat(new Rect(x, y, width, height));
+
+        Imgcodecs.imwrite(fileName, subImage);
+    }
+
+    @Override
+    public Mat loadImage(String path) {
+        try {
+            BufferedImage sourceImage = ImageIO.read(new File(path));
+
+            return convertImageToMat(sourceImage);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return Mat.zeros(0,0,CvType.CV_8UC1);
+    }
+
+    @Override
+    public void saveImage(Mat image, String format, String path) {
+        BufferedImage destinationImage = convertMatToImage(image);
+        try {
+            ImageIO.write(destinationImage,format,new File(path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -6,8 +6,6 @@ import org.opencv.core.*;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,22 +21,23 @@ public class DefaultImageContentOperations implements ImageContentOperations {
         this.imageOperations = imageOperations;
     }
 
-@Override
+    @Override
     public Mat binarizeImageAndGetXAxisHistogram(Mat colorImage) {
 
         Mat binarized = imageOperations.binarizeColorImage(colorImage);
+        findRactangularContours(binarized);
         List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
 
-        Mat histogramImage = new Mat(colorImage.rows(),colorImage.cols(), CvType.CV_8S);
+        Mat histogramImage = new Mat(colorImage.rows(), colorImage.cols(), CvType.CV_8S);
 
         Scalar blackColor = new Scalar(0);
         histogramImage.setTo(new Scalar(1));
 
-        for (int i =0; i < histogramData.size(); i++){
-            Point start = new Point(0,i);
+        for (int i = 0; i < histogramData.size(); i++) {
+            Point start = new Point(0, i);
             Point end = new Point(histogramData.get(i), i);
 
-            Imgproc.line(histogramImage,start, end,blackColor);
+            Imgproc.line(histogramImage, start, end, blackColor);
         }
 
         return histogramImage;
@@ -46,29 +45,29 @@ public class DefaultImageContentOperations implements ImageContentOperations {
 
     @Override
     public Mat detectTextLinesAndGetLinesHistogram(Mat colorImage, int xMinimalValue) {
-        List<TextLineData> lines = detectTextLines(colorImage,xMinimalValue);
+        List<TextLineData> lines = detectTextLines(colorImage, xMinimalValue);
         Mat matImage = imageOperations.binarizeColorImage(colorImage);
-        Mat histogramImage = new Mat(colorImage.rows(),colorImage.cols(), CvType.CV_8S);
+        Mat histogramImage = new Mat(colorImage.rows(), colorImage.cols(), CvType.CV_8S);
 
         Scalar blackColor = new Scalar(0);
         histogramImage.setTo(new Scalar(1));
 
-        for (int i =0; i < lines.size(); i++){
+        for (int i = 0; i < lines.size(); i++) {
             TextLineData row = lines.get(i);
             Mat line = matImage.submat(row.getY(), row.getY() + row.getHeight(), 0, matImage.cols());
 
             List<Integer> yAxisHistogram = getYAxisHistogramData(line);
 
-            for (int j =0; j < yAxisHistogram.size(); j++){
+            for (int j = 0; j < yAxisHistogram.size(); j++) {
                 int height = yAxisHistogram.get(j);
 
                 if (height == 0)
                     continue;
 
-                Point start = new Point(j,row.getY());
-                Point end = new Point(j, row.getY()+ height);
+                Point start = new Point(j, row.getY());
+                Point end = new Point(j, row.getY() + height);
 
-                Imgproc.line(histogramImage,start, end,blackColor);
+                Imgproc.line(histogramImage, start, end, blackColor);
             }
         }
 
@@ -80,21 +79,21 @@ public class DefaultImageContentOperations implements ImageContentOperations {
         Mat binarized = imageOperations.binarizeColorImage(colorImage);
         List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
 
-        List<TextLineData> result = detectTextLines(histogramData,minimalValue);
+        List<TextLineData> result = detectTextLines(histogramData, minimalValue);
 
         return result;
     }
 
     @Override
-    public List<LetterData[]> detectLetterLocations(Mat colorImage, int xMinimalValue, int yMinimalValue){
+    public List<LetterData[]> detectLetterLocations(Mat colorImage, int xMinimalValue, int yMinimalValue) {
         List<LetterData[]> result = new ArrayList<>();
 
         Mat binarized = imageOperations.binarizeColorImage(colorImage);
         List<Integer> histogramData = getXAxisHistogramForBinarized(binarized);
 
-        List<TextLineData> textLines = detectTextLines(histogramData,yMinimalValue);
+        List<TextLineData> textLines = detectTextLines(histogramData, yMinimalValue);
 
-        for (int i = 0; i < textLines.size(); i++){
+        for (int i = 0; i < textLines.size(); i++) {
             List<LetterData> line = detectLettersInLine(textLines.get(i), binarized, xMinimalValue);
 
             result.add(line.toArray(new LetterData[0]));
@@ -104,17 +103,17 @@ public class DefaultImageContentOperations implements ImageContentOperations {
     }
 
     @SuppressWarnings("Duplicates")
-    private List<Integer> getXAxisHistogramForBinarized(Mat mat){
+    private List<Integer> getXAxisHistogramForBinarized(Mat mat) {
         List<Integer> histogramData = new ArrayList<>();
 
         int rowCount = mat.rows();
         int colCount = mat.cols();
 
-        for (int i = 0; i < rowCount; i++){
+        for (int i = 0; i < rowCount; i++) {
             int count = 0;
-            for (int j = 0; j < colCount; j++){
-                double[] cell = mat.get(i,j);
-                if (cell[0]==0)
+            for (int j = 0; j < colCount; j++) {
+                double[] cell = mat.get(i, j);
+                if (cell[0] == 0)
                     count++;
             }
 
@@ -124,20 +123,20 @@ public class DefaultImageContentOperations implements ImageContentOperations {
         return histogramData;
     }
 
-    private List<TextLineData> detectTextLines(List<Integer> histogramData, int minimalValue){
+    private List<TextLineData> detectTextLines(List<Integer> histogramData, int minimalValue) {
         List<TextLineData> result = new ArrayList<>();
 
         int start = -1;
         int height = 1;
-        for (int i =0; i < histogramData.size(); i++){
-            if (histogramData.get(i) > minimalValue){
+        for (int i = 0; i < histogramData.size(); i++) {
+            if (histogramData.get(i) > minimalValue) {
                 if (start == -1)
                     start = i;
                 else
                     height++;
-            }else{
-                if (start>-1 && height >1){
-                    TextLineData entry = new TextLineData(start,height);
+            } else {
+                if (start > -1 && height > 1) {
+                    TextLineData entry = new TextLineData(start, height);
                     result.add(entry);
 
                     start = -1;
@@ -146,8 +145,8 @@ public class DefaultImageContentOperations implements ImageContentOperations {
             }
         }
 
-        if (start>-1 && height >1){
-            TextLineData entry = new TextLineData(start,height);
+        if (start > -1 && height > 1) {
+            TextLineData entry = new TextLineData(start, height);
             result.add(entry);
         }
 
@@ -163,15 +162,15 @@ public class DefaultImageContentOperations implements ImageContentOperations {
 
         int start = -1;
         int width = 1;
-        for (int i = 0; i < yAxisHistogram.size(); i++){
-            if (yAxisHistogram.get(i) > minimalValue){
+        for (int i = 0; i < yAxisHistogram.size(); i++) {
+            if (yAxisHistogram.get(i) > minimalValue) {
                 if (start == -1)
                     start = i;
                 else
                     width++;
-            }else{
-                if (start> -1 && width >1){
-                    LetterData entry = new LetterData(start,textLineData.getY(),width, textLineData.getHeight());
+            } else {
+                if (start > -1 && width > 1) {
+                    LetterData entry = new LetterData(start, textLineData.getY(), width, textLineData.getHeight());
                     result.add(entry);
 
                     start = -1;
@@ -184,17 +183,17 @@ public class DefaultImageContentOperations implements ImageContentOperations {
     }
 
     @SuppressWarnings("Duplicates")
-    private List<Integer> getYAxisHistogramData(Mat mat){
+    private List<Integer> getYAxisHistogramData(Mat mat) {
         List<Integer> histogramData = new ArrayList<>();
 
         int rowCount = mat.rows();
         int colCount = mat.cols();
 
-        for (int i = 0; i< colCount;i++){
+        for (int i = 0; i < colCount; i++) {
             int count = 0;
-            for (int j = 0; j< rowCount;j++){
-                double[] cell = mat.get(j,i);
-                if (cell[0]==0)
+            for (int j = 0; j < rowCount; j++) {
+                double[] cell = mat.get(j, i);
+                if (cell[0] == 0)
                     count++;
             }
 
@@ -202,5 +201,40 @@ public class DefaultImageContentOperations implements ImageContentOperations {
         }
 
         return histogramData;
+    }
+
+    @Override
+    public Rect findRactangularContours(Mat img) {
+
+        int left = img.cols();
+        int right = 0;
+        int top = img.rows();
+        int bottom = 0;
+
+        for (int i = 0; i < img.cols(); i++){
+            for (int j = 0; j < img.rows(); j++){
+                double[] data = img.get(j, i);
+                if (data[0] != 0)
+                    continue;
+
+                if (left > i)
+                    left = i;
+                if (right < i)
+                    right = i;
+                if (top > j)
+                    top = j;
+                if (bottom < j)
+                    bottom = j;
+            }
+        }
+
+        return new Rect(left,top,right - left+1, bottom - top+1);
+    }
+
+    @Override
+    public Mat trimToContours(Mat img) {
+        Rect rect = findRactangularContours(img);
+
+        return img.submat(rect);
     }
 }

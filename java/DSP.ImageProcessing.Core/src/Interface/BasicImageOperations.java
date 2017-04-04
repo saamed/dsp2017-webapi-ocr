@@ -15,4 +15,7 @@ public interface BasicImageOperations {
     Mat convertToGrayscale(Mat colorImage);
     byte[] getBinaryImageVector(Mat mat);
     double[] getNormalizedBinaryImageVector(Mat mat);
+    void exportSubImage(Mat image, int x, int y, int width, int height, String path);
+    Mat loadImage(String path);
+    void saveImage(Mat image, String format, String path);
 }
