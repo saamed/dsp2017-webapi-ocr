@@ -4,19 +4,31 @@ package DataStructures;
  * Created by bclapa on 23.03.2017.
  */
 public class CharacterDefinitionFile {
-    private String letter;
-    private String filePath;
+    private String character;
+    private int width;
+    private int height;
+    private byte[] data;
 
-    public CharacterDefinitionFile(String letter, String image) {
-        this.letter = letter;
-        this.filePath = image;
+    public CharacterDefinitionFile(String letter, byte[] data, int width, int height) {
+        this.character = letter;
+        this.data = data;
+        this.width = width;
+        this.height = height;
     }
 
-    public String getLetter() {
-        return letter;
+    public String getCharacter() {
+        return character;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public byte[] getData() {
+        return data;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 }

@@ -3,12 +3,15 @@ package Patterns;
 import DataStructures.CharacterDefinitionFile;
 import DataStructures.CharacterPattern;
 import Interface.BasicImageOperations;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +20,7 @@ import java.util.List;
  */
 public class DefaultPatternProvider implements PatternProvider {
 
+    private final String resourceKey = "/Resources/data.xml";
     private static List<CharacterPattern> characterPatterns;
     private BasicImageOperations basicImageOperations;
 
@@ -31,9 +35,9 @@ public class DefaultPatternProvider implements PatternProvider {
         return characterPatterns;
     }
 
-    private void initialize(){
+    private void initialize() {
 
-        if (characterPatterns != null && characterPatterns.size() >0)
+        if (characterPatterns != null && characterPatterns.size() > 0)
             return;
 
         List<CharacterDefinitionFile> characterDefinitionFiles = loadCharacterDefinitions();
@@ -42,20 +46,47 @@ public class DefaultPatternProvider implements PatternProvider {
 
     private List<CharacterDefinitionFile> loadCharacterDefinitions() {
         List<CharacterDefinitionFile> characterDefinitionFiles = new ArrayList<>();
-        for (CharacterDefinitionFile definitionFile : NumberDefinitionFiles.getAll()){
-            characterDefinitionFiles.add(definitionFile);
+
+        InputStream resource = System.class.getResourceAsStream(resourceKey);
+
+        SAXBuilder sb = new SAXBuilder();
+        try {
+            Document document = sb.build(resource);
+            Element rootElement = document.getRootElement();
+            List<Element> children = rootElement.getChildren();
+
+            for (Element child : children) {
+                CharacterDefinitionFile definitionFile = getCharacterDefinitionFile(child);
+                characterDefinitionFiles.add(definitionFile);
+            }
+
+        } catch (JDOMException e) {
+            e.printStackTrace();
+            e.getMessage();
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.getMessage();
+        } catch (Exception e) {
+            e.getMessage();
         }
 
-        for (CharacterDefinitionFile definitionFile : CapitalLetterDefinitionFiles.getAll()){
-            characterDefinitionFiles.add(definitionFile);
-        }
         return characterDefinitionFiles;
     }
 
-    private List<CharacterPattern> prepareCharacterPatterns(List<CharacterDefinitionFile> definitions){
+    private CharacterDefinitionFile getCharacterDefinitionFile(Element child) {
+        int width = Integer.parseInt(child.getAttributeValue("width"));
+        int height = Integer.parseInt(child.getAttributeValue("height"));
+        String character = child.getAttributeValue("name");
+        String content = child.getContent(0).getValue();
+        byte[] data = processContent(content);
+
+        return new CharacterDefinitionFile(character,data,width,height);
+    }
+
+    private List<CharacterPattern> prepareCharacterPatterns(List<CharacterDefinitionFile> definitions) {
         List<CharacterPattern> characterPatterns = new ArrayList<>();
 
-        for (CharacterDefinitionFile definition: definitions) {
+        for (CharacterDefinitionFile definition : definitions) {
             try {
                 characterPatterns.add(preparePattern(definition));
             } catch (IOException e) {
@@ -67,12 +98,24 @@ public class DefaultPatternProvider implements PatternProvider {
         return characterPatterns;
     }
 
+    private byte[] processContent(String content) {
+        String[] splitted = content.split(";");
+        byte[] result = new byte[splitted.length];
+
+        for (int i = 0; i < splitted.length; i++) {
+            String entry = splitted[i];
+            result[i] = Byte.parseByte(entry);
+        }
+
+        return result;
+    }
+
     private CharacterPattern preparePattern(CharacterDefinitionFile definitionFile) throws IOException {
-        BufferedImage image = ImageIO.read(new File(definitionFile.getFilePath()));
-        Mat binarizedImage = basicImageOperations.binarizeColorImage(basicImageOperations.convertImageToMat(image));
+        Mat binarizedImage = new Mat(definitionFile.getHeight(), definitionFile.getWidth(), CvType.CV_8S);
+        binarizedImage.put(0,0, definitionFile.getData());
 
         double[] imageVector = basicImageOperations.getNormalizedBinaryImageVector(binarizedImage);
 
-        return new CharacterPattern(definitionFile.getLetter(), imageVector, binarizedImage.width(), binarizedImage.height());
+        return new CharacterPattern(definitionFile.getCharacter(), imageVector, binarizedImage.width(), binarizedImage.height());
     }
 }
